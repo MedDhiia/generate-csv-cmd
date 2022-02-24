@@ -43,27 +43,28 @@ class GenerateCsvCommand extends Command
         $orders = $this->getOrders();
         $items = $this->getItems();
 
-
+        // Create a Collections so that i can use the collecion methods that laravel provides
         $customers = collect($customers)->groupBy('addresses.*.type')->map(function ($customers) {
             return $customers->groupBy('id');
         })->toArray();
-
         $orders = collect($orders)->groupBy('id')->toArray();
-        
-        // dd($orders);
 
+        
+        // Here i'm trying to filter the data and creating an array as result who contains the needs ()
         $data = array_map(function ($item) use ($customers, $orders) {
+
+            // just to make function return looks pretty
             $itemId = $item['id'];
             $orderId = $item['orderId'];
             $order = $orders[$orderId][0];
             $customerId = $orders[$orderId][0]['customerId'];
             $customer = $customers['shipping'][$customerId][0];
 
+            // get the shipping address not the billing one
             $addresses = collect($customer['addresses'])->groupBy('type')->toArray();
             
             $address = $addresses['shipping'][0] ;
 
-            
             return [
                 'orderID' => $order['id'],
                 'orderDate' => $order['createdAt'],
@@ -79,7 +80,7 @@ class GenerateCsvCommand extends Command
             ];
         }, $items);
 
-        
+        // generating the csv file
         $this->dataToCsv($data);
         
         return   $this->info('The command was successful!');
